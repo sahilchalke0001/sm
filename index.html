@@ -1,0 +1,519 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.dash { padding: 1.5rem 1rem; }
+.header { margin-bottom: 1.5rem; }
+.header h1 { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
+.header p { font-size: 13px; color: var(--color-text-secondary); margin-top: 4px; }
+.tabs { display: flex; gap: 4px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.tab { padding: 7px 16px; font-size: 13px; border: 0.5px solid var(--color-border-secondary); border-radius: 20px; cursor: pointer; color: var(--color-text-secondary); background: transparent; transition: all .15s; }
+.tab.active { background: var(--color-text-primary); color: var(--color-background-primary); border-color: var(--color-text-primary); }
+.tab:hover:not(.active) { background: var(--color-background-secondary); }
+.panel { display: none; }
+.panel.active { display: block; }
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+.metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 14px 16px; }
+.metric-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 6px; }
+.metric-value { font-size: 22px; font-weight: 500; color: var(--color-text-primary); line-height: 1; }
+.metric-sub { font-size: 11px; margin-top: 4px; }
+.metric-sub.crit { color: #C0392B; }
+.metric-sub.high { color: #D35400; }
+.metric-sub.med { color: #B7770D; }
+.metric-sub.low { color: #27AE60; }
+.section-title { font-size: 14px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 10px; }
+.chart-wrap { position: relative; width: 100%; margin-bottom: 1.5rem; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 1.5rem; }
+@media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
+.card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; }
+.table-wrap { overflow-x: auto; margin-bottom: 1.5rem; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th { text-align: left; font-weight: 500; font-size: 11px; color: var(--color-text-secondary); padding: 8px 10px; border-bottom: 0.5px solid var(--color-border-tertiary); text-transform: uppercase; letter-spacing: .04em; }
+td { padding: 9px 10px; border-bottom: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--color-background-secondary); }
+.badge { display: inline-block; font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 10px; }
+.b-crit { background: #FDEDEC; color: #A93226; }
+.b-high { background: #FEF5E7; color: #9A7D0A; }
+.b-med { background: #EAF2FF; color: #154360; }
+.b-low { background: #E9F7EF; color: #1E8449; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; font-size: 12px; color: var(--color-text-secondary); }
+.leg-item { display: flex; align-items: center; gap: 5px; }
+.leg-dot { width: 10px; height: 10px; border-radius: 2px; }
+.risk-bar-wrap { margin-bottom: 1.5rem; }
+.risk-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.risk-label { font-size: 12px; color: var(--color-text-secondary); width: 130px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.risk-bar-bg { flex: 1; height: 8px; background: var(--color-background-secondary); border-radius: 4px; overflow: hidden; }
+.risk-bar-fill { height: 100%; border-radius: 4px; transition: width .5s; }
+.risk-val { font-size: 11px; color: var(--color-text-secondary); width: 30px; text-align: right; }
+.filter-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.filter-btn { font-size: 11px; padding: 4px 10px; border: 0.5px solid var(--color-border-secondary); border-radius: 12px; cursor: pointer; background: transparent; color: var(--color-text-secondary); }
+.filter-btn.on { background: var(--color-text-primary); color: var(--color-background-primary); }
+.progress-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.progress-label { font-size: 12px; width: 160px; flex-shrink: 0; color: var(--color-text-primary); }
+.progress-bg { flex: 1; height: 6px; background: var(--color-background-secondary); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 3px; }
+.progress-val { font-size: 11px; width: 40px; text-align: right; color: var(--color-text-secondary); }
+</style>
+
+<div class="dash">
+  <div class="header">
+    <h1>British Airways — FY24 ESG Dashboard</h1>
+    <p>Interactive overview across Environment · Social · Governance · Supply Chain</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showPanel('overview')">Overview</button>
+    <button class="tab" onclick="showPanel('environment')">Environment</button>
+    <button class="tab" onclick="showPanel('social')">Social</button>
+    <button class="tab" onclick="showPanel('governance')">Governance</button>
+    <button class="tab" onclick="showPanel('supplychain')">Supply Chain</button>
+  </div>
+
+  <!-- OVERVIEW PANEL -->
+  <div class="panel active" id="panel-overview">
+    <div class="metrics">
+      <div class="metric"><div class="metric-label">Total ESG Areas</div><div class="metric-value">87</div><div class="metric-sub low">Across 4 pillars</div></div>
+      <div class="metric"><div class="metric-label">Critical Risks</div><div class="metric-value">8</div><div class="metric-sub crit">Require urgent action</div></div>
+      <div class="metric"><div class="metric-label">High Priority</div><div class="metric-value">14</div><div class="metric-sub high">Active monitoring</div></div>
+      <div class="metric"><div class="metric-label">Net Zero Target</div><div class="metric-value">2050</div><div class="metric-sub med">SAF &lt;2% today</div></div>
+      <div class="metric"><div class="metric-label">FY25 Revenue</div><div class="metric-value">£13–14B</div><div class="metric-sub low">Post-COVID recovery</div></div>
+      <div class="metric"><div class="metric-label">Board Diversity</div><div class="metric-value">45–50%</div><div class="metric-sub low">Near target</div></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="section-title">Risk distribution by pillar</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="riskPieChart"></canvas></div>
+        <div class="legend">
+          <span class="leg-item"><span class="leg-dot" style="background:#E24B4A"></span>Critical</span>
+          <span class="leg-item"><span class="leg-dot" style="background:#BA7517"></span>High</span>
+          <span class="leg-item"><span class="leg-dot" style="background:#378ADD"></span>Medium</span>
+          <span class="leg-item"><span class="leg-dot" style="background:#639922"></span>Low</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Priority count by pillar</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="pillarBarChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:1.5rem">
+      <div class="section-title">Key ESG commitments &amp; status</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+        <div>
+          <div class="progress-row"><div class="progress-label">SAF adoption</div><div class="progress-bg"><div class="progress-fill" style="width:2%;background:#E24B4A"></div></div><div class="progress-val">&lt;2%</div></div>
+          <div class="progress-row"><div class="progress-label">Scope 3 supplier coverage</div><div class="progress-bg"><div class="progress-fill" style="width:80%;background:#378ADD"></div></div><div class="progress-val">~80%</div></div>
+          <div class="progress-row"><div class="progress-label">Waste diversion target</div><div class="progress-bg"><div class="progress-fill" style="width:75%;background:#BA7517"></div></div><div class="progress-val">~75%</div></div>
+          <div class="progress-row"><div class="progress-label">Single-use plastic removal</div><div class="progress-bg"><div class="progress-fill" style="width:90%;background:#639922"></div></div><div class="progress-val">&gt;90%</div></div>
+        </div>
+        <div>
+          <div class="progress-row"><div class="progress-label">Ethics training completion</div><div class="progress-bg"><div class="progress-fill" style="width:99%;background:#639922"></div></div><div class="progress-val">&gt;99%</div></div>
+          <div class="progress-row"><div class="progress-label">Women on board</div><div class="progress-bg"><div class="progress-fill" style="width:36%;background:#378ADD"></div></div><div class="progress-val">36%</div></div>
+          <div class="progress-row"><div class="progress-label">Engagement index</div><div class="progress-bg"><div class="progress-fill" style="width:78%;background:#BA7517"></div></div><div class="progress-val">~78%</div></div>
+          <div class="progress-row"><div class="progress-label">Supplier CAP closure</div><div class="progress-bg"><div class="progress-fill" style="width:100%;background:#639922"></div></div><div class="progress-val">~100%</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ENVIRONMENT PANEL -->
+  <div class="panel" id="panel-environment">
+    <div class="metrics">
+      <div class="metric"><div class="metric-label">Total KPIs tracked</div><div class="metric-value">21</div></div>
+      <div class="metric"><div class="metric-label">Critical items</div><div class="metric-value">5</div><div class="metric-sub crit">Scope 1, 2, 3 + SAF</div></div>
+      <div class="metric"><div class="metric-label">High priority</div><div class="metric-value">4</div><div class="metric-sub high">Fleet + noise</div></div>
+      <div class="metric"><div class="metric-label">SAF share of fuel</div><div class="metric-value">&lt;2%</div><div class="metric-sub crit">Target: Scale</div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:1.5rem">
+      <div class="section-title">Emissions scope breakdown</div>
+      <div class="chart-wrap" style="height:220px"><canvas id="emissionsChart"></canvas></div>
+      <div class="legend">
+        <span class="leg-item"><span class="leg-dot" style="background:#E24B4A"></span>Scope 1 – Jet fuel (direct)</span>
+        <span class="leg-item"><span class="leg-dot" style="background:#BA7517"></span>Scope 2 – Electricity</span>
+        <span class="leg-item"><span class="leg-dot" style="background:#378ADD"></span>Scope 3 – Value chain</span>
+      </div>
+    </div>
+
+    <div class="section-title">Environment audit matrix — all areas</div>
+    <div class="filter-row" id="env-filters">
+      <button class="filter-btn on" onclick="filterEnv('all',this)">All</button>
+      <button class="filter-btn" onclick="filterEnv('Critical',this)">Critical</button>
+      <button class="filter-btn" onclick="filterEnv('High',this)">High</button>
+      <button class="filter-btn" onclick="filterEnv('Medium',this)">Medium</button>
+      <button class="filter-btn" onclick="filterEnv('Low',this)">Low</button>
+    </div>
+    <div class="table-wrap">
+      <table id="env-table">
+        <thead><tr><th>Theme</th><th>Audit Area</th><th>KPI</th><th>Gap Analysis</th><th>Priority</th><th>Owner</th></tr></thead>
+        <tbody id="env-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SOCIAL PANEL -->
+  <div class="panel" id="panel-social">
+    <div class="metrics">
+      <div class="metric"><div class="metric-label">Women overall</div><div class="metric-value">~43%</div><div class="metric-sub med">Cabin crew skews data</div></div>
+      <div class="metric"><div class="metric-label">Women technical</div><div class="metric-value">~18%</div><div class="metric-sub high">Below parity</div></div>
+      <div class="metric"><div class="metric-label">Gender pay gap</div><div class="metric-value">~22%</div><div class="metric-sub high">Median; role-driven</div></div>
+      <div class="metric"><div class="metric-label">Engagement index</div><div class="metric-value">~78%</div><div class="metric-sub med">Target &gt;80%</div></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="section-title">Gender representation by level</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="genderChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="section-title">Training completion rates</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="trainingChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-bottom:10px">Diversity &amp; inclusion metrics</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Category</th><th>Metric</th><th>Current</th><th>Target</th><th>Observation</th><th>Risk</th></tr></thead>
+        <tbody id="social-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- GOVERNANCE PANEL -->
+  <div class="panel" id="panel-governance">
+    <div class="metrics">
+      <div class="metric"><div class="metric-label">FY25 Revenue</div><div class="metric-value">£13–14B</div><div class="metric-sub low">IAG report</div></div>
+      <div class="metric"><div class="metric-label">Operating profit</div><div class="metric-value">£1.7–2B</div><div class="metric-sub low">Strong turnaround</div></div>
+      <div class="metric"><div class="metric-label">Load factor</div><div class="metric-value">~83–85%</div><div class="metric-sub low">Healthy demand</div></div>
+      <div class="metric"><div class="metric-label">Board size (IAG)</div><div class="metric-value">~14</div><div class="metric-sub low">Directors</div></div>
+      <div class="metric"><div class="metric-label">Ind. directors</div><div class="metric-value">Majority</div><div class="metric-sub low">Compliant</div></div>
+      <div class="metric"><div class="metric-label">Code of conduct</div><div class="metric-value">&gt;99%</div><div class="metric-sub low">Training complete</div></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="section-title">Board diversity breakdown</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="boardChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="section-title">Risk level distribution</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="govRiskChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-bottom:10px">Full governance &amp; financial metrics</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Area</th><th>Metric</th><th>Value</th><th>Reference</th><th>Status</th><th>Risk</th></tr></thead>
+        <tbody id="gov-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SUPPLY CHAIN PANEL -->
+  <div class="panel" id="panel-supplychain">
+    <div class="metrics">
+      <div class="metric"><div class="metric-label">Supplier code coverage</div><div class="metric-value">~100%</div><div class="metric-sub low">All tier-1</div></div>
+      <div class="metric"><div class="metric-label">Scope 3 supplier rptg</div><div class="metric-value">~80%</div><div class="metric-sub med">Smaller lag</div></div>
+      <div class="metric"><div class="metric-label">CAP closure rate</div><div class="metric-value">~100%</div><div class="metric-sub low">Within SLA</div></div>
+      <div class="metric"><div class="metric-label">Forced labour</div><div class="metric-value">Zero tol.</div><div class="metric-sub crit">Immediate remedy</div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:1.5rem">
+      <div class="section-title">Supply chain risk level distribution</div>
+      <div class="chart-wrap" style="height:180px"><canvas id="scRiskChart"></canvas></div>
+      <div class="legend">
+        <span class="leg-item"><span class="leg-dot" style="background:#E24B4A"></span>Critical</span>
+        <span class="leg-item"><span class="leg-dot" style="background:#BA7517"></span>High</span>
+        <span class="leg-item"><span class="leg-dot" style="background:#378ADD"></span>Medium</span>
+        <span class="leg-item"><span class="leg-dot" style="background:#639922"></span>Low</span>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-bottom:10px">Full supply chain risk assessment</div>
+    <div class="filter-row" id="sc-filters">
+      <button class="filter-btn on" onclick="filterSC('all',this)">All</button>
+      <button class="filter-btn" onclick="filterSC('Critical',this)">Critical</button>
+      <button class="filter-btn" onclick="filterSC('High',this)">High</button>
+      <button class="filter-btn" onclick="filterSC('Medium',this)">Medium</button>
+      <button class="filter-btn" onclick="filterSC('Low',this)">Low</button>
+    </div>
+    <div class="table-wrap">
+      <table id="sc-table">
+        <thead><tr><th>Area</th><th>Coverage</th><th>High Risk?</th><th>Status</th><th>Notes</th><th>Risk</th></tr></thead>
+        <tbody id="sc-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const COLORS = { Critical:'#E24B4A', High:'#BA7517', Medium:'#378ADD', Low:'#639922' };
+function badge(r){ const k=r.trim(); const m={Critical:'b-crit',High:'b-high',Medium:'b-med',Low:'b-low'}; return `<span class="badge ${m[k]||'b-med'}">${k}</span>`; }
+
+const envData = [
+  ['Carbon Emissions','Overall Footprint','Total GHG Emissions (Scope 1,2,3)','Post-COVID recovery driving emissions rebound','Critical','Sustainability & Strategy'],
+  ['Carbon Emissions','Flight Operations','Scope 1 – Jet Fuel Emissions','Efficiency gains offset by traffic growth','Critical','Flight Operations'],
+  ['Energy Use','Ground Operations','Scope 2 – Electricity (Market-Based)','Partial renewable sourcing across hubs','High','Facilities & Energy'],
+  ['Energy Use','Grid Exposure','Scope 2 – Location-Based','Heathrow & Gatwick grid intensity remains material','Medium','Energy Procurement'],
+  ['Value Chain','Indirect Emissions','Scope 3 – Total','Aircraft manufacturing & fuel supply dominate','Critical','Supply Chain'],
+  ['Value Chain','Fuel Supply','Scope 3 – Upstream Fuel','SAF <2% of total fuel use','Critical','Fuel Strategy'],
+  ['Value Chain','Customer Travel','Scope 3 – Passenger & Catering','Catering, lounges & onboard services contribute','Medium','Customer Experience'],
+  ['Logistics','Ground Logistics','Scope 3 – Ground Transport','Diesel-based ground handling still prevalent','Medium','Airport Operations'],
+  ['Carbon Removal','Offsetting','Carbon Offset Program','Offset reliance vs true reductions','Medium','Sustainability'],
+  ['Energy','Fleet Efficiency','Average Fuel Burn per ASK','Older aircraft less efficient','High','Fleet Planning'],
+  ['Energy','Fleet Modernisation','New Aircraft Induction','Capex and delivery timelines limit speed','High','Fleet Strategy'],
+  ['Efficiency','Operations','Flight Efficiency (Taxi, Routing)','ATC constraints limit optimisation','Medium','Operations Control'],
+  ['Water','Ground Operations','Water Consumption at Airports','High water use at hubs','Medium','Facilities Management'],
+  ['Water','Efficiency','Water per Passenger','Legacy infrastructure challenges','Medium','Sustainability'],
+  ['Waste','Operations','Cabin & Ground Waste Diversion','Mixed recycling standards across airports','Medium','Ground Operations'],
+  ['Waste','Catering','Single-Use Plastic Reduction','Limited alternatives for inflight safety','Medium','Catering Services'],
+  ['Waste','Circularity','Uniform & Cabin Material Reuse','Early-stage programs','Low','Procurement'],
+  ['Materials','Aircraft Interiors','Sustainable Materials Use','Certification & safety constraints','Medium','Engineering'],
+  ['Products','Customer Offering','Carbon Labelling & Transparency','Adoption varies by route','Low','Digital & CX'],
+  ['Ecosystems','Biodiversity','Airport Biodiversity Plans','Land constraints at major hubs','Medium','Environment'],
+  ['Ecosystems','Noise & Air Quality','Noise Footprint Reduction','Night operations remain sensitive','High','Community & Ops'],
+];
+
+const socialData = [
+  ['Global Workforce','Women (Overall)','HR Systems','YoY Improvement','~43%','Strong cabin crew representation offsets technical gaps','Medium'],
+  ['Global Workforce','Women (Technical & Engineering)','HR Systems','YoY Improvement','~18%','Engineering & pilot pipeline remains male-dominated','High'],
+  ['Leadership','Women (Executives)','HR Systems','Parity Goal','~30%','Progress visible but below parity ambition','High'],
+  ['Leadership','Women (Senior Management)','HR Systems','Growth','Improving','Gradual increase through internal promotions','Medium'],
+  ['Management','Women (Managers)','HR Systems','Pipeline Growth','~34%','Healthy mid-level talent pipeline','Low'],
+  ['UK Workforce','Ethnic Minority Representation','UK Pay Data','Growth Target','~18%','Reflects UK labour market averages','Medium'],
+  ['UK Leadership','Ethnic Minority Leaders','Internal Data','Growth','~12%','Underrepresentation at senior levels','High'],
+  ['Global Workforce','International Diversity','HR Systems','Balanced','High','Strong multinational workforce','Low'],
+  ['Inclusion','Disability (UK)','Self-ID Program','≥8% Benchmark','~7.5%','Close to UK benchmark; disclosure improving','Medium'],
+  ['Inclusion','Disability (Global)','Self-ID Program','Growth','~6.0%','Variation by geography','Medium'],
+  ['Inclusion','LGBTQ+ (UK)','Self-ID Program','—','~6.5%','Stable and supported through networks','Low'],
+  ['Inclusion','Veterans / Ex-Service','HR Systems','Growth','~4.0%','Strong alignment with aviation skillsets','Low'],
+  ['Pay Equity','Gender Pay Gap','UK Pay Gap Disclosure','Reduce YoY','~22% (median)','Driven by role distribution, not pay disparity','High'],
+  ['Pay Equity','Ethnicity Pay Gap','Internal Review','Reduce YoY','Under review','Data maturity improving','Medium'],
+  ['Training','Safety & Compliance Training','LMS','1.0','0.994','Strong regulatory compliance','Low'],
+  ['Training','DEI & Respect Training','LMS','1.0','0.968','High participation','Low'],
+  ['Culture','Engagement Index','Employee Survey','>80%','~78%','Recovering post-COVID restructuring','Medium'],
+  ['Hiring','Pilot & Engineer Recruitment','Workforce Planning','Meet Demand','On track','Global skills shortage risk','High'],
+  ['Skilling','Future Skills (SAF, Digital Ops)','Learning Platform','Scale Capability','Expanding','Linked to Net Zero strategy','Medium'],
+  ['Wellbeing','Fatigue & Mental Health Programs','HR & Safety Reports','Reduce Incidents','Active','Critical in safety-led culture','High'],
+  ['Community','Aviation Skills Outreach','CSR Reports','Expand Access','Growing','Strong apprentice & cadet programs','Low'],
+];
+
+const govData = [
+  ['Financial Performance','FY25 Revenue','~£13–14B','IAG Annual Report','Continued recovery post-COVID','Medium'],
+  ['Financial Performance','Operating Profit','~£1.7–2.0B','IAG Annual Report','Strong turnaround','Low'],
+  ['Financial Performance','Passenger Load Factor','~83–85%','Investor Presentation','Healthy demand environment','Low'],
+  ['Financial Performance','Premium Revenue Share','Increasing','Earnings Call','Premium travel strength','Low'],
+  ['Investment','Fleet Investment','Multi-year Capex','Fleet Strategy','Focus on efficiency & sustainability','Medium'],
+  ['Investment','SAF Commitments','£ Millions','Sustainability Disclosure','Scaling supply remains challenge','High'],
+  ['Board Structure','Board Size (IAG)','~14 Directors','IAG Governance Report','Appropriate','Low'],
+  ['Board Structure','Independent Directors','Majority Independent','UK Corp Governance Code','Compliant','Low'],
+  ['Board Diversity','Gender & Ethnic Diversity','~45–50%','Diversity Policy','Near target','Low'],
+  ['Board Diversity','Women Directors','~36%','Governance Report','Above UK minimum','Low'],
+  ['Board Refreshment','Average Tenure','~5.5 Years','Governance Framework','Balanced','Low'],
+  ['Leadership','Chair / Senior Ind. Director','Appointed','Governance Charter','Active oversight','Low'],
+  ['Committees','Audit Committee','Fully Independent','Committee Terms','Effective','Low'],
+  ['Committees','Remuneration Committee','Fully Independent','Committee Terms','Effective','Low'],
+  ['Committees','Sustainability Committee','Board-Level','ESG Governance Charter','Strengthening ESG oversight','Medium'],
+  ['Ethics','Code of Conduct Training','>99%','Ethics & Compliance Report','Completed','Low'],
+  ['Ethics','Whistleblowing Mechanism','Active','Speak-Up Policy','High usage; monitored','Medium'],
+  ['Cybersecurity','Aviation Cyber Resilience','Implemented','Security Framework','Critical operational focus','Critical'],
+  ['Cybersecurity','Security Workforce','Dedicated Teams','IT Security Program','Scaled post incidents','High'],
+  ['Access Control','MFA & Identity Controls','Mandatory','Zero Trust Framework','Implemented','Low'],
+  ['Privacy','GDPR Compliance','Compliant','Data Protection Framework','Ongoing audits','Medium'],
+  ['Privacy','Passenger Data Requests','High Volume','Privacy Operations','Handled within SLA','Low'],
+  ['Technology Risk','Operational IT Resilience','Priority Program','IT Resilience Plan','Improving post disruptions','High'],
+  ['Responsible Tech','AI Use in Ops & Pricing','Controlled','Internal Governance','Human oversight required','Medium'],
+  ['Public Policy','Aviation Policy Engagement','Transparent','Policy Statements','Active with regulators','Medium'],
+  ['Tax','Cash Taxes Paid','Disclosed','IAG Tax Strategy','Compliant','Low'],
+];
+
+const scData = [
+  ['Supplier Standards','Supplier Code of Conduct Coverage','Yes','~100%','Applies to all tier-1 suppliers','Low'],
+  ['Supplier Training','Code of Conduct Training','Yes','Ongoing','Annual attestation required','Low'],
+  ['Emissions','Scope 3 Reporting Coverage','Yes','~80%','Smaller suppliers lag reporting','Medium'],
+  ['Emissions','Supplier Carbon Reduction Plans','Yes','Active','Required for fuel, OEM & catering','High'],
+  ['Energy','Clean Energy Enablement','No','Expanding','Focus on SAF & renewable ground ops','Medium'],
+  ['Water','Water Risk Management','Yes','Targeted','High-risk airport regions prioritised','High'],
+  ['Waste','Waste Data Disclosure','No','Improving','Catering & MRO waste data inconsistent','Medium'],
+  ['Responsible Sourcing','Aircraft Materials Traceability','Yes','Mapped','Aluminium & composites in focus','Medium'],
+  ['Responsible Sourcing','SAF Feedstock Traceability','Yes','Partial','Feedstock traceability evolving','High'],
+  ['Human Rights','Supplier Social Audits','Yes','Targeted','Focus on high-risk geographies','High'],
+  ['Human Rights','Forced Labour Screening','Yes','Zero Tolerance','Immediate remediation & disengagement','Critical'],
+  ['Labour Standards','Working Hours Compliance','Yes','Monitored','Catering & ground handling risk','Medium'],
+  ['Labour Standards','Health & Safety','Yes','Monitored','Ramp safety & MRO focus','Medium'],
+  ['Diversity','Supplier Diversity (UK & US)','No','Tracked','Growing focus under IAG','Low'],
+  ['Diversity','Women-Owned Suppliers','No','Tracked','Catering & services suppliers','Low'],
+  ['Diversity','Minority-Owned Suppliers','No','Tracked','Regional reporting improving','Low'],
+  ['Diversity','SME / Local Suppliers','No','Strong','Supports local economies','Low'],
+  ['Packaging','Sustainable Catering Packaging','No','High','Paper-based & compostable shift','Low'],
+  ['Packaging','Single-Use Plastic Reduction','No','>90% Removed','Limited aviation safety exceptions','Low'],
+  ['Circularity','Aircraft Parts Reuse & Recycling','No','Active','Component life-extension programs','Low'],
+  ['Logistics','Sustainable Ground Transport','Yes','Pilots','Electric GSE rollout','Medium'],
+  ['Logistics','Air Freight Emissions (Cargo)','Yes','High','Structural aviation constraint','High'],
+  ['Products','Cabin Material Take-Back','No','Available','Seats, textiles & uniforms','Low'],
+  ['Raw Materials','Aircraft OEM Due Diligence','Yes','Engaged','Long-cycle supply chain risk','High'],
+  ['Corrective Action','Supplier CAP Closure','Yes','~100%','Findings closed within SLA','Low'],
+];
+
+function countRisks(data, col) {
+  const c = {Critical:0,High:0,Medium:0,Low:0};
+  data.forEach(r => { const v = r[col]; if(c[v]!==undefined) c[v]++; });
+  return c;
+}
+
+function populateTable(tbodyId, data, cols) {
+  const tb = document.getElementById(tbodyId);
+  tb.innerHTML = data.map(r => `<tr>${cols.map((c,i)=>c==='risk'?`<td>${badge(r[i])}</td>`:`<td>${r[i]}</td>`).join('')}</tr>`).join('');
+}
+
+function filterEnv(level, btn) {
+  document.querySelectorAll('#env-filters .filter-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const tb = document.getElementById('env-tbody');
+  const rows = envData.filter(r=>level==='all'||r[4]===level);
+  tb.innerHTML = rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td style="max-width:200px;font-size:11px;color:var(--color-text-secondary)">${r[3]}</td><td>${badge(r[4])}</td><td style="font-size:11px">${r[5]}</td></tr>`).join('');
+}
+
+function filterSC(level, btn) {
+  document.querySelectorAll('#sc-filters .filter-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const tb = document.getElementById('sc-tbody');
+  const rows = scData.filter(r=>level==='all'||r[5]===level);
+  tb.innerHTML = rows.map(r=>`<tr><td>${r[0]}</td><td style="font-size:11px">${r[1]}</td><td>${r[2]==='Yes'?'<span style="color:#27AE60">✓</span>':'<span style="color:#999">–</span>'}</td><td>${r[3]}</td><td style="font-size:11px;color:var(--color-text-secondary)">${r[4]}</td><td>${badge(r[5])}</td></tr>`).join('');
+}
+
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// Init tables
+filterEnv('all', document.querySelector('#env-filters .filter-btn'));
+filterSC('all', document.querySelector('#sc-filters .filter-btn'));
+
+const socialCols = [0,1,4,3,5,6].map((i,j)=>j===5?'risk':'text');
+document.getElementById('social-tbody').innerHTML = socialData.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td><strong>${r[4]}</strong></td><td style="font-size:11px;color:var(--color-text-secondary)">${r[3]}</td><td style="font-size:11px;color:var(--color-text-secondary)">${r[5]}</td><td>${badge(r[6])}</td></tr>`).join('');
+document.getElementById('gov-tbody').innerHTML = govData.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td><strong>${r[2]}</strong></td><td style="font-size:11px">${r[3]}</td><td style="font-size:11px;color:var(--color-text-secondary)">${r[4]}</td><td>${badge(r[5])}</td></tr>`).join('');
+
+// Charts
+const isDark = matchMedia('(prefers-color-scheme:dark)').matches;
+const textCol = isDark ? '#c2c0b6' : '#5F5E5A';
+const gridCol = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+
+const envRisks = countRisks(envData, 4);
+const socRisks = countRisks(socialData, 6);
+const govRisks = countRisks(govData, 5);
+const scRisks  = countRisks(scData, 5);
+
+new Chart(document.getElementById('riskPieChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Critical','High','Medium','Low'],
+    datasets: [{
+      data: [
+        envRisks.Critical+socRisks.Critical+govRisks.Critical+scRisks.Critical,
+        envRisks.High+socRisks.High+govRisks.High+scRisks.High,
+        envRisks.Medium+socRisks.Medium+govRisks.Medium+scRisks.Medium,
+        envRisks.Low+socRisks.Low+govRisks.Low+scRisks.Low
+      ],
+      backgroundColor:['#E24B4A','#BA7517','#378ADD','#639922'],
+      borderWidth:0
+    }]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} } }
+});
+
+new Chart(document.getElementById('pillarBarChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Environment','Social','Governance','Supply Chain'],
+    datasets: [
+      { label:'Critical', data:[envRisks.Critical,socRisks.Critical,govRisks.Critical,scRisks.Critical], backgroundColor:'#E24B4A', borderRadius:3 },
+      { label:'High', data:[envRisks.High,socRisks.High,govRisks.High,scRisks.High], backgroundColor:'#BA7517', borderRadius:3 },
+      { label:'Medium', data:[envRisks.Medium,socRisks.Medium,govRisks.Medium,scRisks.Medium], backgroundColor:'#378ADD', borderRadius:3 },
+      { label:'Low', data:[envRisks.Low,socRisks.Low,govRisks.Low,scRisks.Low], backgroundColor:'#639922', borderRadius:3 },
+    ]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{ticks:{color:textCol,font:{size:11}},grid:{display:false}},y:{ticks:{color:textCol,font:{size:11}},grid:{color:gridCol},stacked:false}} }
+});
+
+new Chart(document.getElementById('emissionsChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Scope 1\nJet Fuel','Scope 2\nElectricity','Scope 3\nValue Chain'],
+    datasets: [{
+      label: 'Relative contribution',
+      data: [65, 5, 30],
+      backgroundColor:['#E24B4A','#BA7517','#378ADD'],
+      borderRadius:4
+    }]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx=>`~${ctx.raw}% of total` } } },
+    scales:{ x:{ticks:{color:textCol,font:{size:11}},grid:{display:false}}, y:{ticks:{color:textCol,font:{size:11},callback:v=>v+'%'},grid:{color:gridCol},max:80} }
+  }
+});
+
+new Chart(document.getElementById('genderChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Overall','Exec','Senior Mgmt','Managers','Technical'],
+    datasets: [{ label:'Women %', data:[43,30,34,34,18], backgroundColor:'#378ADD', borderRadius:3 }]
+  },
+  options: {
+    indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{ x:{ticks:{color:textCol,font:{size:10},callback:v=>v+'%'},grid:{color:gridCol},max:60}, y:{ticks:{color:textCol,font:{size:10}},grid:{display:false}} }
+  }
+});
+
+new Chart(document.getElementById('trainingChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Safety &\nCompliance','DEI &\nRespect'],
+    datasets: [{ label:'Completion', data:[99.4,96.8], backgroundColor:['#639922','#378ADD'], borderRadius:4 }]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{ x:{ticks:{color:textCol,font:{size:11}},grid:{display:false}}, y:{ticks:{color:textCol,font:{size:10},callback:v=>v+'%'},grid:{color:gridCol},min:94,max:100} }
+  }
+});
+
+new Chart(document.getElementById('boardChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Women directors','Other directors'],
+    datasets: [{ data:[36,64], backgroundColor:['#378ADD','#D3D1C7'], borderWidth:0 }]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>ctx.raw+'%'}} } }
+});
+
+const govRiskArr = govData.map(r=>r[5]);
+const govCount = {Critical:0,High:0,Medium:0,Low:0};
+govRiskArr.forEach(v=>{if(govCount[v]!==undefined)govCount[v]++;});
+new Chart(document.getElementById('govRiskChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Critical','High','Medium','Low'],
+    datasets: [{ data:[govCount.Critical,govCount.High,govCount.Medium,govCount.Low], backgroundColor:['#E24B4A','#BA7517','#378ADD','#639922'], borderRadius:4 }]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{ticks:{color:textCol,font:{size:11}},grid:{display:false}},y:{ticks:{color:textCol,font:{size:11}},grid:{color:gridCol}}} }
+});
+
+new Chart(document.getElementById('scRiskChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Critical','High','Medium','Low'],
+    datasets: [{ data:[scRisks.Critical,scRisks.High,scRisks.Medium,scRisks.Low], backgroundColor:['#E24B4A','#BA7517','#378ADD','#639922'], borderRadius:4 }]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{ticks:{color:textCol,font:{size:11}},grid:{display:false}},y:{ticks:{color:textCol,font:{size:11}},grid:{color:gridCol}}} }
+});
+</script>
